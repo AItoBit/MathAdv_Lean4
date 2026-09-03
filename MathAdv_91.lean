@@ -24,76 +24,64 @@ set_option pp.piBinderTypes true
 set_option grind.warning false
 
 /-!
-# A vibrating string with damping proportional to velocity
+# Damped vibrating string
 
-The physical problem: a stretched string of (constant) linear mass density `rho > 0` under
-(constant) tension `T`, subject in addition to a damping force per unit length proportional to
-the transverse velocity, with damping constant `delta`.
+A string with linear mass density `rho > 0` under tension `T`, subject in addition to a
+damping (air-resistance) force proportional to the transverse velocity with constant of
+proportionality `k` per unit length, obeys Newton's second law in the form
 
-For small transverse displacements `y t x`, the net transverse force per unit length exerted by
-the tension is `T * ∂²y/∂x²`, and the damping contributes `- delta * ∂y/∂t`.  Newton's second law
-per unit length therefore reads
+  `rho * ∂²y/∂t² = T * ∂²y/∂x² - k * ∂y/∂t`.
 
-  `rho * ∂²y/∂t² = T * ∂²y/∂x² - delta * ∂y/∂t`.
-
-Dividing by `rho` and setting `a = sqrt (T / rho)`, `b = delta / rho` gives the stated equation of
-motion
+Dividing by `rho` and setting `a² = T / rho`, `b = k / rho` puts the equation of motion in
+the stated form
 
   `∂²y/∂t² = a² ∂²y/∂x² - b ∂y/∂t`,
 
-which is the equation of the *vibrating string* (answer (c)), with a damping term added.
+which is the equation of the vibrating string (with a damping term) — answer (c).
 
-The original statement of the exercise as a bare Lean formula,
+The original statement of the exercise, as literally quantified over *all* functions `y`
+and *all* constants `a`, `b`, is of course false; this is recorded below as
+`brown_2_unconditional_false`, together with the corrected, conditional statement
+`brown_2`.
+-/
 
-```
-theorem brown_2 {a b : ℝ} {y : ℝ → ℝ → ℝ} :
+/-- **The equation of motion of a damped vibrating string.**
+
+If Newton's second law for the string reads
+`rho * ∂²y/∂t² = T * ∂²y/∂x² - k * ∂y/∂t` (with linear density `rho > 0`, tension `T`
+and damping constant `k`), and if `a` and `b` are defined by `a ^ 2 = T / rho` and
+`b = k / rho`, then the motion satisfies
+`∂²y/∂t² = a ^ 2 * ∂²y/∂x² - b * ∂y/∂t`. -/
+theorem brown_2 {a b rho T k : ℝ} {y : ℝ → ℝ → ℝ} (hrho : rho ≠ 0)
+    (ha : a ^ 2 = T / rho) (hb : b = k / rho)
+    (hNewton : ∀ (t x : ℝ),
+      rho * deriv (fun t0 => deriv (fun t1 => y t1 x) t0) t =
+        T * deriv (fun x0 => deriv (fun x1 => y t x1) x0) x
+        - k * deriv (fun t0 => y t0 x) t) :
     ∀ (t x : ℝ),
     deriv (fun t0 => deriv (fun t1 => y t1 x) t0) t =
       a ^ 2 * deriv (fun x0 => deriv (fun x1 => y t x1) x0) x
       - b * deriv (fun t0 => y t0 x) t := by
-  sorry
-```
-
-is **false**: it asserts the equation for *arbitrary* `a`, `b` and *arbitrary* `y`, with no physical
-hypothesis relating them.  This is recorded below as `brown_2_as_stated_false`, and the intended
-content of the exercise is formalized as `damped_string_equation_of_motion`.
--/
-
-/-- The equation of motion of a string with damping proportional to the velocity.
-
-Hypothesis `hNewton` is Newton's second law applied to an element of the string: mass per unit
-length `rho` times the transverse acceleration equals the transverse force per unit length coming
-from the tension, `T * ∂²y/∂x²`, minus the damping force per unit length, `delta * ∂y/∂t`.
-
-Setting `a = Real.sqrt (T / rho)` and `b = delta / rho`, this takes the form
-`∂²y/∂t² = a² ∂²y/∂x² - b ∂y/∂t`. -/
-theorem damped_string_equation_of_motion
-    {rho T delta a b : ℝ} {y : ℝ → ℝ → ℝ}
-    (hrho : 0 < rho) (hT : 0 ≤ T)
-    (hNewton : ∀ t x : ℝ,
-      rho * deriv (fun t0 => deriv (fun t1 => y t1 x) t0) t =
-        T * deriv (fun x0 => deriv (fun x1 => y t x1) x0) x
-        - delta * deriv (fun t0 => y t0 x) t)
-    (ha : a = Real.sqrt (T / rho)) (hb : b = delta / rho) :
-    ∀ t x : ℝ,
-      deriv (fun t0 => deriv (fun t1 => y t1 x) t0) t =
-        a ^ 2 * deriv (fun x0 => deriv (fun x1 => y t x1) x0) x
-        - b * deriv (fun t0 => y t0 x) t := by
-  have hsq : a ^ 2 = T / rho := by
-    rw [ha, Real.sq_sqrt (div_nonneg hT hrho.le)]
   intro t x
   have h := hNewton t x
-  rw [hsq, hb]
+  rw [ha, hb]
   field_simp
   linarith [h]
 
-/-- The exercise's equation cannot hold for arbitrary coefficients and arbitrary displacement:
-for `y t x = t`, `a = 0` and `b = 1` the two sides differ. -/
-theorem brown_2_as_stated_false :
+/-- The exercise's equation is *not* an identity valid for arbitrary displacement functions
+`y` and arbitrary constants `a`, `b`: it expresses a physical law (Newton's second law for
+the string).  Here is an explicit counterexample: `y t x = t ^ 2` with `a = b = 0`. -/
+theorem brown_2_unconditional_false :
     ¬ (∀ (a b : ℝ) (y : ℝ → ℝ → ℝ) (t x : ℝ),
         deriv (fun t0 => deriv (fun t1 => y t1 x) t0) t =
           a ^ 2 * deriv (fun x0 => deriv (fun x1 => y t x1) x0) x
           - b * deriv (fun t0 => y t0 x) t) := by
   intro h
-  have := h 0 1 (fun t _ => t) 0 0
+  have := h 0 0 (fun t _ => t ^ 2) 0 0
+  have e1 : (fun (t0 : ℝ) => deriv (fun (t1 : ℝ) => t1 ^ 2) t0) = fun t0 : ℝ => 2 * t0 := by
+    funext t0
+    simp
+  rw [e1] at this
+  simp only [zero_mul] at this
+  rw [deriv_const_mul_field] at this
   simp at this
