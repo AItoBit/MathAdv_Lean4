@@ -17,186 +17,196 @@ set_option autoImplicit false
 set_option pp.fullNames true
 set_option pp.structureInstances true
 set_option pp.coercions.types true
-set_option pp.piBinderTypes true
 set_option pp.funBinderTypes true
 set_option pp.letVarTypes true
+set_option pp.piBinderTypes true
 
 set_option grind.warning false
 
 /-!
-# A holomorphic function omitting a segment is constant
+# An entire function omitting a nondegenerate segment is constant
 
-If `f : ℂ → ℂ` is entire and its range misses a nondegenerate segment `[a,b]`, then `f` is
-constant.  The proof is by *Liouville's theorem* (answer **(b)** to the multiple-choice
-question): the Möbius map `w ↦ (w - b)/(w - a)` sends `ℂ \ [a,b]` into the slit plane
-`ℂ \ (-∞, 0]`, the principal square root sends the slit plane into the right half-plane,
-and `s ↦ 1/(s+1)` sends the right half-plane into the unit disc.  Composing with `f` gives a
-bounded entire function, which is constant by Liouville; each of the three maps is injective,
-so `f` itself is constant.
+The original statement below (`question_8`) is **false as stated**: it assumes nothing about
+`f` (in particular not that `f` is holomorphic), and it allows the degenerate "segment"
+`[a, a] = {a}`. Both defects are witnessed by explicit counterexamples
+(`question_8_is_false` and `holomorphy_is_necessary`).
+
+The corrected statement is `entire_omitting_segment_isConstant`: an entire function whose
+range omits the segment `[a, b]` with `a ≠ b` is constant.
+
+The method answering the multiple-choice question is **(b) Liouville's theorem**: after
+composing `f` with a Möbius transformation carrying `[a,b]` to the ray `(-∞, 0]` and taking a
+holomorphic square root on the slit plane, one obtains a bounded entire function, which
+Liouville's theorem forces to be constant.
 -/
 
-namespace MissingSegment
-
-/-- The Möbius transformation `w ↦ (w - b)/(w - a)` maps the complement of the segment `[a,b]`
-into the slit plane `ℂ \ (-∞, 0]`. -/
-theorem moebius_mem_slitPlane_of_notMem_segment (a b w : ℂ) (hw : w ∉ segment ℝ a b) :
-    (w - b) / (w - a) ∈ Complex.slitPlane := by
-  have hwa : w ≠ a := fun h => hw (h ▸ left_mem_segment ℝ a b)
-  have hwa' : w - a ≠ 0 := sub_ne_zero.2 hwa
-  by_contra hcon
-  rw [Complex.mem_slitPlane_iff] at hcon
-  push_neg at hcon
-  obtain ⟨hre, him⟩ := hcon
-  set u : ℂ := (w - b) / (w - a) with hu
-  set s : ℝ := -u.re with hs
-  have hs0 : 0 ≤ s := by simp only [hs, Left.nonneg_neg_iff]; linarith
-  have hueq : u = -(s : ℂ) := by
-    apply Complex.ext <;> simp [hs, him]
-  have hwb : w - b = u * (w - a) := by rw [hu]; field_simp
-  have hpos : (0 : ℝ) < 1 + s := by linarith
-  have hc : (1 : ℂ) + (s : ℂ) ≠ 0 := by exact_mod_cast ne_of_gt hpos
-  rw [hueq] at hwb
-  have key : (s : ℂ) * a + b = w * (1 + (s : ℂ)) := by linear_combination -hwb
-  exact hw ⟨s / (1 + s), 1 / (1 + s), by positivity, by positivity, by field_simp; ring, by
-    rw [Complex.real_smul, Complex.real_smul]
+/-- If `(w - a) / (w - b)` is a nonpositive real number, then `w` lies on the segment `[a,b]`. -/
+theorem mem_segment_of_ratio_nonpos (a b w : ℂ) (s : ℝ) (hs : s ≤ 0) (hwb : w ≠ b)
+    (heq : (w - a) / (w - b) = (s : ℂ)) : w ∈ segment ℝ a b := by
+  have _hne : w - b ≠ 0 := sub_ne_zero.mpr hwb
+  have key : w - a = (s : ℂ) * (w - b) := by
+    field_simp at heq; linear_combination heq
+  have hs1 : (0:ℝ) < 1 - s := by linarith
+  refine ⟨1 - (-s/(1-s)), -s/(1-s), ?_, div_nonneg (by linarith) (by linarith), by ring, ?_⟩
+  · have : -s/(1-s) ≤ 1 := by rw [div_le_one hs1]; linarith
+    linarith
+  · rw [Complex.real_smul, Complex.real_smul]
     push_cast
-    rw [div_mul_eq_mul_div, div_mul_eq_mul_div, ← add_div, div_eq_iff hc]
-    linear_combination key⟩
+    have _hs1' : ((1:ℂ) - (s:ℂ)) ≠ 0 := by
+      simp only [ne_eq, sub_eq_zero]
+      intro hc
+      have := congrArg Complex.re hc
+      simp at this
+      linarith
+    field_simp
+    linear_combination -key
 
-/-- The principal square root maps the slit plane into the open right half-plane. -/
-theorem re_cpow_half_pos {x : ℂ} (hx : x ∈ Complex.slitPlane) : 0 < (x ^ (1 / 2 : ℂ)).re := by
-  have hx0 : x ≠ 0 := Complex.slitPlane_ne_zero hx
-  rw [Complex.cpow_def_of_ne_zero hx0, Complex.exp_re]
-  have h1 : (Complex.log x * (1 / 2)).im = x.arg / 2 := by
-    simp [Complex.mul_im, Complex.log_im]; ring
-  rw [h1]
-  have h2 : |x.arg| < Real.pi :=
-    abs_lt.2 ⟨Complex.neg_pi_lt_arg x, Complex.arg_lt_pi_iff.2 (hx.imp le_of_lt id)⟩
-  rw [abs_lt] at h2
-  have : 0 < Real.cos (x.arg / 2) :=
-    Real.cos_pos_of_mem_Ioo ⟨by linarith [h2.1], by linarith [h2.2]⟩
+/-- If `w` avoids the segment `[a, b]`, then the Möbius image `(w - a)/(w - b)` lies in the
+slit plane `ℂ \ (-∞, 0]`. -/
+theorem ratio_mem_slitPlane {a b w : ℂ} (hw : w ∉ segment ℝ a b) :
+    (w - a) / (w - b) ∈ Complex.slitPlane := by
+  have hwb : w ≠ b := fun h => hw (h ▸ right_mem_segment ℝ a b)
+  by_contra hc
+  rw [Complex.mem_slitPlane_iff] at hc
+  push Not at hc
+  obtain ⟨hre, him⟩ := hc
+  refine hw (mem_segment_of_ratio_nonpos a b w ((w - a) / (w - b)).re hre hwb ?_)
+  apply Complex.ext <;> simp [him]
+
+/-- The principal square root `exp (log h / 2)` of a point of the slit plane has positive
+real part. -/
+theorem re_sqrt_pos {h : ℂ} (hh : h ∈ Complex.slitPlane) :
+    0 < (Complex.exp (Complex.log h / 2)).re := by
+  have _h1 : -Real.pi < h.arg := Complex.neg_pi_lt_arg h
+  have _h2 : h.arg < Real.pi := by
+    rw [Complex.arg_lt_pi_iff]
+    rcases Complex.mem_slitPlane_iff.mp hh with h' | h'
+    · exact Or.inl h'.le
+    · exact Or.inr h'
+  have him : (Complex.log h / 2).im = h.arg / 2 := by
+    simp [Complex.log_im]
+  rw [Complex.exp_re, him]
+  have _hcos : 0 < Real.cos (h.arg / 2) := by
+    apply Real.cos_pos_of_mem_Ioo
+    constructor <;> [linarith; linarith]
   positivity
 
-/-- **An entire function whose range misses a nondegenerate segment `[a,b]` is constant.**
-
-The hypothesis `a ≠ b` is necessary: `Complex.exp` is entire and misses the degenerate segment
-`[0,0] = {0}` without being constant (see `exp_missing_point_not_constant`). -/
-theorem constant_of_missing_segment (f : ℂ → ℂ) (hf : Differentiable ℂ f) (a b : ℂ) (hab : a ≠ b)
-    (hmiss : ∀ z : ℂ, f z ∉ segment ℝ a b) : ∃ c : ℂ, ∀ z : ℂ, f z = c := by
-  -- `f z ≠ a` since `a` lies on the segment
-  have hfa : ∀ z : ℂ, f z - a ≠ 0 := fun z =>
-    sub_ne_zero.2 fun h => hmiss z (h ▸ left_mem_segment ℝ a b)
-  -- the Möbius image lands in the slit plane
-  set u : ℂ → ℂ := fun z => (f z - b) / (f z - a) with hudef
-  have hslit : ∀ z : ℂ, u z ∈ Complex.slitPlane := fun z =>
-    moebius_mem_slitPlane_of_notMem_segment a b (f z) (hmiss z)
-  have hu : Differentiable ℂ u := fun z =>
-    ((hf z).sub_const b).div ((hf z).sub_const a) (hfa z)
-  -- its principal square root lands in the right half-plane
-  set s : ℂ → ℂ := fun z => (u z) ^ (1 / 2 : ℂ) with hsdef
-  have hsre : ∀ z : ℂ, 0 < (s z).re := fun z => re_cpow_half_pos (hslit z)
-  have hs : Differentiable ℂ s := fun z =>
-    (hu z).cpow (differentiableAt_const _) (hslit z)
-  have hs1 : ∀ z : ℂ, s z + 1 ≠ 0 := by
-    intro z hz
-    have : (s z + 1).re = 0 := by rw [hz]; simp
-    simp only [Complex.add_re, Complex.one_re] at this
-    linarith [hsre z]
-  -- the resulting bounded entire function
-  set h : ℂ → ℂ := fun z => 1 / (s z + 1) with hhdef
-  have hh : Differentiable ℂ h := fun z =>
-    (differentiableAt_const _).div ((hs z).add_const 1) (hs1 z)
-  have hbdd : Bornology.IsBounded (Set.range h) := by
-    apply (Metric.isBounded_closedBall (x := (0 : ℂ)) (r := 1)).subset
-    rintro _ ⟨z, rfl⟩
-    have h1 : (1 : ℝ) ≤ ‖s z + 1‖ := by
-      have := Complex.re_le_norm (s z + 1)
-      simp only [Complex.add_re, Complex.one_re] at this
-      linarith [hsre z]
-    simp only [Metric.mem_closedBall, dist_zero_right, hhdef, norm_div, norm_one]
-    rw [div_le_one (by linarith)]
-    exact h1
-  -- Liouville
-  have hconst : ∀ z w : ℂ, h z = h w := hh.apply_eq_apply_of_bounded hbdd
-  refine ⟨f 0, fun z => ?_⟩
-  have h1 : h z = h 0 := hconst z 0
-  -- unwind the three injections
-  have hs2 : s z = s 0 := by
-    simp only [hhdef, one_div] at h1
-    have := congrArg (fun t : ℂ => t⁻¹) h1
-    simpa [inv_inv] using add_right_cancel (by simpa [inv_inv] using this : s z + 1 = s 0 + 1)
-  have hpow : ∀ w : ℂ, (s w) ^ (2 : ℕ) = u w := by
-    intro w
-    have h2 : (1 / 2 : ℂ) = ((2 : ℕ) : ℂ)⁻¹ := by norm_num
-    rw [hsdef, h2]
-    exact Complex.cpow_nat_inv_pow (u w) (n := 2) two_ne_zero
-  have hu2 : u z = u 0 := by rw [← hpow z, ← hpow 0, hs2]
-  have hba : b - a ≠ 0 := sub_ne_zero.2 (Ne.symm hab)
-  have := hu2
-  simp only [hudef, div_eq_div_iff (hfa z) (hfa 0)] at this
-  have hfin : (b - a) * (f z - f 0) = 0 := by linear_combination this
-  rcases mul_eq_zero.1 hfin with h' | h'
-  · exact absurd h' hba
-  · exact sub_eq_zero.mp h'
-
-/-- The hypothesis `a ≠ b` cannot be dropped: `Complex.exp` is entire, omits the degenerate
-segment `[0,0]`, and is not constant. -/
-theorem exp_missing_point_not_constant :
-    Differentiable ℂ Complex.exp ∧ (∀ z : ℂ, Complex.exp z ∉ segment ℝ (0 : ℂ) 0) ∧
-      ¬ ∃ c : ℂ, ∀ z : ℂ, Complex.exp z = c := by
-  refine ⟨Complex.differentiable_exp, ?_, ?_⟩
-  · intro z
-    simp only [segment_same, Set.mem_singleton_iff]
-    exact Complex.exp_ne_zero z
-
-  · rintro ⟨c, hc⟩
-    have h0 := hc 0
-    have h1 := hc (Real.log 2)
-    rw [Complex.exp_zero] at h0
-    have : Complex.exp ((Real.log 2 : ℝ) : ℂ) = ((2 : ℝ) : ℂ) := by
-      rw [← Complex.ofReal_exp, Real.exp_log (by norm_num)]
-    rw [this] at h1
-    rw [← h0] at h1
-    norm_num at h1
-
-/-!
-## The statement as originally posed
-
-The following statement, without a holomorphy assumption on `f` and without `a ≠ b`, is false;
-it is recorded here (commented out) together with a disproof.
-
-```
-theorem question_8
-    (f : ℂ → ℂ) :
-    (∃ a b : ℂ, ∀ z : ℂ, f z ∈ Set.compl (segment ℝ a b)) →
-    (∃ c : ℂ, ∀ z : ℂ, f z = c) := by
-  sorry
-```
--/
-
-/-- The literal statement of the problem, without the holomorphy hypothesis, is false: an
-arbitrary (non-holomorphic) function may omit a segment without being constant. -/
-theorem question_8_false :
-    ¬ ∀ f : ℂ → ℂ, (∃ a b : ℂ, ∀ z : ℂ, f z ∈ Set.compl (segment ℝ a b)) →
-      (∃ c : ℂ, ∀ z : ℂ, f z = c) := by
-  intro hcon
-  obtain ⟨c, hc⟩ := hcon (fun z => if z = 0 then 1 else 2) ⟨0, 0, by
+/-- **Main theorem.** An entire function whose range misses a nondegenerate segment `[a, b]`
+is constant. (Proof: compose with a Möbius transformation sending `[a,b]` to `(-∞,0]`, take a
+holomorphic square root on the slit plane, and apply Liouville's theorem to `1/(1 + √·)`.) -/
+theorem entire_omitting_segment_isConstant
+    (f : ℂ → ℂ) (hf : Differentiable ℂ f)
+    (hmiss : ∃ a b : ℂ, a ≠ b ∧ ∀ z : ℂ, f z ∈ (segment ℝ a b)ᶜ) :
+    ∃ c : ℂ, ∀ z : ℂ, f z = c := by
+  obtain ⟨a, b, hab, hmiss⟩ := hmiss
+  -- `f` never takes the value `b`
+  have hfb : ∀ z, f z - b ≠ 0 := fun z =>
+    sub_ne_zero.mpr fun hc => hmiss z (hc ▸ right_mem_segment ℝ a b)
+  set g : ℂ → ℂ := fun z => (f z - a) / (f z - b) with hg
+  have hgslit : ∀ z, g z ∈ Complex.slitPlane := fun z => ratio_mem_slitPlane (hmiss z)
+  have hgdiff : Differentiable ℂ g := fun z =>
+    ((hf z).sub_const a).div ((hf z).sub_const b) (hfb z)
+  -- the holomorphic square root
+  set u : ℂ → ℂ := fun z => Complex.exp (Complex.log (g z) / 2) with hu
+  have hudiff : Differentiable ℂ u := fun z =>
+    (((Complex.differentiableAt_log (hgslit z)).comp z (hgdiff z)).div_const 2).cexp
+  have hure : ∀ z, 0 < (u z).re := fun z => re_sqrt_pos (hgslit z)
+  have husq : ∀ z, u z * u z = g z := by
     intro z
-    show (if z = 0 then (1 : ℂ) else 2) ∉ segment ℝ (0 : ℂ) 0
-    simp only [segment_same, Set.mem_singleton_iff]
-    split <;> norm_num⟩
-  have h0 := hc 0
-  have h1 := hc 1
-  norm_num at h0 h1
-  rw [← h0] at h1
-  norm_num at h1
+    rw [hu]
+    simp only
+    rw [← Complex.exp_add]
+    have : Complex.log (g z) / 2 + Complex.log (g z) / 2 = Complex.log (g z) := by ring
+    rw [this, Complex.exp_log (Complex.slitPlane_ne_zero (hgslit z))]
+  -- the bounded entire function
+  set G : ℂ → ℂ := fun z => (1 + u z)⁻¹ with hG
+  have hne : ∀ z, 1 + u z ≠ 0 := by
+    intro z hc
+    have := congrArg Complex.re hc
+    simp only [Complex.add_re, Complex.one_re, Complex.zero_re] at this
+    have := hure z
+    linarith
+  have hGdiff : Differentiable ℂ G := fun z => ((hudiff z).const_add 1).inv (hne z)
+  have hGbdd : ∀ z, ‖G z‖ ≤ 1 := by
+    intro z
+    rw [hG]
+    simp only [norm_inv]
+    rw [inv_le_one_iff₀]
+    right
+    calc (1:ℝ) ≤ (1 + u z).re := by
+          have := (hure z); simp only [Complex.add_re, Complex.one_re]; linarith
+      _ ≤ ‖1 + u z‖ := Complex.re_le_norm _
+  -- Liouville
+  have hGconst : ∀ z, G z = G 0 := by
+    intro z
+    refine hGdiff.apply_eq_apply_of_bounded ?_ z 0
+    apply Bornology.IsBounded.subset (Metric.isBounded_closedBall (x := (0:ℂ)) (r := 1))
+    rintro w ⟨y, rfl⟩
+    simpa [Metric.mem_closedBall] using hGbdd y
+  have huconst : ∀ z, u z = u 0 := by
+    intro z
+    have h1 : (1 + u z)⁻¹ = (1 + u 0)⁻¹ := hGconst z
+    have := inv_injective h1
+    linear_combination this
+  refine ⟨f 0, fun z => ?_⟩
+  have hgc : g z = g 0 := by rw [← husq, ← husq, huconst z]
+  rw [hg] at hgc
+  simp only at hgc
+  have _h1 := hfb z
+  have _h2 := hfb 0
+  field_simp at hgc
+  have : (a - b) * f z = (a - b) * f 0 := by linear_combination hgc
+  have hab' : a - b ≠ 0 := sub_ne_zero.mpr hab
+  exact mul_left_cancel₀ hab' this
 
-/-- Faithful formalization of the problem: an entire function omitting a nondegenerate segment
-`[a,b]` (i.e. with range contained in the complement of the segment) is constant. -/
-theorem question_8 (f : ℂ → ℂ) (hf : Differentiable ℂ f) :
+/-- The statement as originally posed is false: without a holomorphy assumption, and allowing
+the degenerate segment `[a,a] = {a}`, the conclusion fails. Indeed `Complex.exp` is a
+nonconstant entire function omitting the value `0`. -/
+theorem question_8_is_false :
+    ¬ (∀ f : ℂ → ℂ, (∃ a b : ℂ, ∀ z : ℂ, f z ∈ (segment ℝ a b)ᶜ) → ∃ c : ℂ, ∀ z : ℂ, f z = c) := by
+  intro H
+  obtain ⟨c, hc⟩ := H Complex.exp ⟨0, 0, by
+    intro z
+    simp only [segment_same, Set.mem_compl_iff, Set.mem_singleton_iff]
+    exact Complex.exp_ne_zero z⟩
+  have h1 : Complex.exp 0 = c := hc 0
+  have h2 : Complex.exp (Real.pi * Complex.I) = c := hc _
+  rw [Complex.exp_zero] at h1
+  rw [Complex.exp_pi_mul_I] at h2
+  rw [← h1] at h2
+  norm_num at h2
+
+/-- Holomorphy is genuinely needed, even for a nondegenerate segment: this (discontinuous)
+function omits the segment `[0,1]` but is not constant. -/
+theorem holomorphy_is_necessary :
+    ¬ (∀ f : ℂ → ℂ, (∃ a b : ℂ, a ≠ b ∧ ∀ z : ℂ, f z ∈ (segment ℝ a b)ᶜ) →
+      ∃ c : ℂ, ∀ z : ℂ, f z = c) := by
+  intro H
+  obtain ⟨_, hc⟩ := H (fun z => if z = 0 then 5 else 6) ⟨0, 1, by norm_num, by
+    intro z
+    have hsub : segment ℝ (0:ℂ) 1 ⊆ Metric.closedBall (0:ℂ) 1 := by
+      apply (convex_closedBall (0:ℂ) 1).segment_subset <;>
+        simp [Metric.mem_closedBall]
+    intro hmem
+    have := hsub hmem
+    simp only [Metric.mem_closedBall, Complex.dist_eq, sub_zero] at this
+    by_cases hz : z = 0 <;> simp [hz] at this⟩
+  have h1 := hc 0
+  have h2 := hc 1
+  norm_num at h1 h2
+  rw [← h1] at h2
+  norm_num at h2
+
+/-- Corrected version of the originally posed `question_8`, stated under the same name and in
+the same shape: the two necessary repairs are the holomorphy hypothesis `hf` on `f` and the
+nondegeneracy `a ≠ b` of the omitted segment (both are unavoidable, see `question_8_is_false`
+and `holomorphy_is_necessary`). -/
+theorem question_8
+    (f : ℂ → ℂ) (hf : Differentiable ℂ f) :
     (∃ a b : ℂ, a ≠ b ∧ ∀ z : ℂ, f z ∈ Set.compl (segment ℝ a b)) →
-    (∃ c : ℂ, ∀ z : ℂ, f z = c) := by
-  rintro ⟨a, b, hab, hmiss⟩
-  exact constant_of_missing_segment f hf a b hab hmiss
+    (∃ c : ℂ, ∀ z : ℂ, f z = c) :=
+  fun h => entire_omitting_segment_isConstant f hf h
 
-end MissingSegment
+/-- The answer to the multiple-choice question "which theorem or method can be used?":
+option (b), Liouville's theorem. -/
+def question_8_answer : Char := 'b'
