@@ -23,41 +23,26 @@ set_option pp.piBinderTypes true
 
 set_option grind.warning false
 
-/-!
-# Order of a power of a group element
+/-- **Gallian 4.9.** If `a` is an element of a group `G` of order `n` and `k` is a positive
+integer, then `|a^k| = n / gcd(n, k)`.
 
-If `a` is an element of a group `G` with `orderOf a = n` and `k` is a positive integer,
-then `|a ^ k| = n / gcd (n, k)`.
-
-Note on the statement: the hypothesis `0 < k` is genuinely needed. If `a` has infinite
-order (`orderOf a = 0` in Lean's convention) and `k = 0`, then `a ^ k = 1` has order `1`,
-while `n / Nat.gcd n k = 0 / 0 = 0`. The original statement without `0 < k` is therefore
-false in that degenerate case; see `Gallian_3_counterexample_k_zero` below.
--/
-
-/- Original statement (false as stated, because of the case `orderOf a = 0`, `k = 0`):
-
+Note: the hypothesis `0 < k` (present in the informal statement) is genuinely needed; see
+`Gallian_3_needs_k_pos` below for a counterexample when `k = 0` and `a` has infinite order
+(`n = 0`).  For `n = 0` and `k > 0` the identity reads `0 = 0 / k`, which is correct. -/
 theorem Gallian_3
-    {G : Type*} [Group G] (a : G) (n k : ℕ)
+    {G : Type*} [Group G] (a : G) (n k : ℕ) (hk : 0 < k)
     (hord : orderOf a = n) :
-    orderOf (a ^ k) = n / Nat.gcd n k := by
-  sorry
--/
-
-/-- **Order of a power.** For `a` in a group `G` of order `n = orderOf a` and `k > 0`,
-the order of `a ^ k` is `n / gcd (n, k)`. -/
-theorem Gallian_3
-    {G : Type*} [Group G] (a : G) (n k : ℕ)
-    (hord : orderOf a = n) (hk : 0 < k) :
     orderOf (a ^ k) = n / Nat.gcd n k := by
   subst hord
   exact orderOf_pow' a hk.ne'
 
-/-- Without the hypothesis `0 < k` the statement fails: take `a = 1` in `ℤ` (additively,
-an element of infinite order) and `k = 0`. -/
-theorem Gallian_3_counterexample_k_zero :
-    ∃ (a : Multiplicative ℤ) (n k : ℕ),
-      orderOf a = n ∧ orderOf (a ^ k) ≠ n / Nat.gcd n k := by
-  refine ⟨Multiplicative.ofAdd 1, 0, 0, ?_, ?_⟩
-  · simp [isOfFinAddOrder_iff_nsmul_eq_zero]
-  · simp
+/-- The hypothesis `0 < k` cannot be dropped from `Gallian_3`: for an element of infinite
+order (`n = 0`) and `k = 0` we get `orderOf (a ^ 0) = 1` while `n / gcd (n, k) = 0`. -/
+theorem Gallian_3_needs_k_pos :
+    ¬ ∀ (G : Type) (_ : Group G) (a : G) (n k : ℕ),
+        orderOf a = n → orderOf (a ^ k) = n / Nat.gcd n k := by
+  intro h
+  have ha : orderOf (Multiplicative.ofAdd (1 : ℤ)) = 0 := by
+    simp [isOfFinAddOrder_iff_nsmul_eq_zero]
+  have := h (Multiplicative ℤ) inferInstance (Multiplicative.ofAdd (1 : ℤ)) 0 0 ha
+  simp at this
