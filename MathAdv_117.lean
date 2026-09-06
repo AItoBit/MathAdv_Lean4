@@ -213,21 +213,7 @@ variables, with no hypothesis relating them to the actual Fourier transform and 
 conclusion false. The faithful versions are `fourier_haarPsi` and `fourier_haar_wavelet` above,
 which use Mathlib's Fourier transform `𝓕` and the normalized cardinal sine `sincN`.
 
-noncomputable def haarPsi' (s : ℝ) (sinc : ℝ → ℝ) : ℂ :=
-  Complex.I *
-    Complex.exp (-Complex.I * Real.pi * s) *
-    (Real.sin (Real.pi * s / 2) : ℂ) *
-    ((sinc (s / 2)) : ℂ)
-
-theorem kammler_26_a
-    (ψ : ℝ → ℝ)
-    (h0 : ∀ x, 0 ≤ x ∧ x < (1 / 2 : ℝ) → ψ x = 1)
-    (h1 : ∀ x, (1 / 2 : ℝ) ≤ x ∧ x < 1 → ψ x = -1)
-    (hout : ∀ x, (x < 0 ∨ 1 ≤ x) → ψ x = 0)
-    (Fourier : (ℝ → ℝ) → ℝ → ℂ)
-    (sinc : ℝ → ℝ) :
-    Fourier ψ = fun s : ℝ => haarPsi' s sinc := by
-  sorry
+ 
 -/
 
 end
