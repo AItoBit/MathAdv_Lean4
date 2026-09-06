@@ -159,16 +159,7 @@ theorem tsum_one_div_add_sq_eq_pi_sq_div_sin_sq (α : ℝ) (hα : ∀ m : ℤ, �
     ring_nf
   exact hs3.tsum_eq
 
-/- The statement as originally supplied is false: the summand `1/n^2` does not involve `α`,
-so the left-hand side is the constant `π²/3` (with Lean's convention `1/0 = 0` for the `n = 0`
-term), while the right-hand side varies with `α`.  The intended statement is
-`tsum_one_div_add_sq_eq_pi_sq_div_sin_sq` above.
 
-theorem stein_16 (α : ℝ) (hα : ∀ m : ℤ, α ≠ (m : ℝ)) :
-  (∑' (n : ℤ), (1 : ℝ) / (n ^ 2)) =
-    Real.pi ^ 2 / (Real.sin (Real.pi * α)) ^ 2 := by
-  sorry
--/
 
 end SteinParseval
 
