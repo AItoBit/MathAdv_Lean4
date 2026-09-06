@@ -54,25 +54,7 @@ def v₁ : ℝ × ℝ × ℝ := (2, (1, 0))
 /-- The vector `(-3, 0, 1)`. -/
 def v₂ : ℝ × ℝ × ℝ := (-3, (0, 1))
 
-/-
-The original (false) statement:
-
-theorem question_4 :
-  let P : Set (ℝ × ℝ × ℝ) :=
-    { p | p.1 - 2 * p.2.1 + 3 * p.2.2 = 0 }
-  let XY : Set (ℝ × ℝ × ℝ) :=
-    { p | p.2.2 = 0 }
-  let v₁ : ℝ × ℝ × ℝ := (2, (1, 0))
-  let v₂ : ℝ × ℝ × ℝ := (-3, (0, 1))
-  ((v₁ ∈ P ∧ v₁ ∈ XY) ∧
-   (v₂ ∈ P ∧ v₂ ∈ XY) ∧
-   LinearIndependent ℝ ![v₁, v₂] ∧
-   (↑(Submodule.span ℝ ({v₁, v₂} : Set (ℝ × ℝ × ℝ))) =
-      { p : ℝ × ℝ × ℝ | p ∈ P ∧ p ∈ XY })) := by
-  sorry
-
-It is false because `v₂ ∉ XY`: the third coordinate of `v₂` is `1`, not `0`.
--/
+ 
 
 /-- The originally proposed statement is false: `v₂ = (-3,0,1)` does not lie in the
 `xy`-plane, so `{v₁, v₂}` cannot be a basis of the intersection. -/
