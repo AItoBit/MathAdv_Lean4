@@ -101,22 +101,4 @@ theorem lieDeriv_smul_vectorField_unstructured_false :
     (fun _ _ => 0) 0 0 1
   simp at this
 
-/- The original, unstructured statement supplied with the problem.  As shown above it is not
-provable (it is in fact false), because it imposes no axioms on `lieDeriv`, `d`, `iota` and
-`wedge`; the faithful version is `CartanCalculus.lieDeriv_smul_vectorField`.
-
-theorem Tu_20_7
-  {k : ℕ}
-  (F : Type*) (VF : Type*) (Ω : ℕ → Type*)
-  [CommSemiring F]
-  [AddCommMonoid VF] [Module F VF]
-  [∀ n, AddCommMonoid (Ω n)] [∀ n, Module F (Ω n)]
-  (lieDeriv : VF → Ω k → Ω k)
-  (d : F → Ω 1)
-  (iota : VF → Ω k → Ω (k - 1))
-  (wedge : Ω 1 → Ω (k - 1) → Ω k)
-  (f : F) (X : VF) (ω : Ω k) :
-  lieDeriv (f • X) ω = f • lieDeriv X ω + wedge (d f) (iota X ω) :=
-by
-  sorry
--/
+ 
