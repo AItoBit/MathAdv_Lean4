@@ -23,26 +23,7 @@ set_option pp.piBinderTypes true
 
 set_option grind.warning false
 
-/-!
-# Derivative of `f x = 2 sin x + 5 arccos x`
 
-The original statement was an equality of the derivative *as a function on all of `ℝ`*:
-
-```
-theorem dawkins_3_7_1 :
-  deriv (fun x : ℝ => 2 * Real.sin x + 5 * Real.arccos x) =
-    (fun x : ℝ => 2 * Real.cos x - 5 / Real.sqrt (1 - x^2)) := by
-  sorry
-```
-
-This is **false** as stated: `Real.arccos` is not differentiable at `x = 1` (nor at `x = -1`),
-so in Lean the left-hand side takes the junk value `0` there, while the right-hand side evaluates
-to `2 * Real.cos 1 - 5 / 0 = 2 * Real.cos 1 ≠ 0`.  This is recorded in
-`dawkins_3_7_1_not_eq_everywhere` below.
-
-The intended (and correct) statement is the pointwise identity on the domain `-1 < x < 1`,
-where `arccos` is differentiable; this is `dawkins_3_7_1_on_Ioo`.
--/
 
 /-- For `-1 < x < 1`, the derivative of `f x = 2 sin x + 5 arccos x` is
 `2 cos x - 5 / √(1 - x ^ 2)`. -/
