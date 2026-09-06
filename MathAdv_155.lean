@@ -241,19 +241,5 @@ theorem Pressley_8_1_2 (u v : ℝ) :
     (fun p : ℝ × ℝ => gaussCurvature p.1 p.2) (u, v) = -1 / cosh u ^ 4 :=
   gaussCurvature_catenoid u v
 
-/-
-The originally supplied statement
-
-  theorem Pressley_8_1_2
-    (u v : ℝ)
-    (GaussCurvatureAt : (ℝ × ℝ) → ℝ) :
-    GaussCurvatureAt (u, v) = - 1 / (cosh u ^ 4) := sorry
-
-is false as stated: `GaussCurvatureAt` is a completely arbitrary function of two
-real parameters, with no link to the catenoid, so it can for instance be the zero
-function.  It is replaced above by the version in which the curvature function is
-the Gauss curvature `det(II)/det(I)` actually computed from the catenoid
-parametrization.
--/
 
 end Catenoid
