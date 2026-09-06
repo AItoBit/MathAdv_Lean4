@@ -16,19 +16,7 @@ theorem strang_13_3_13 {x y z : ℝ} :
       (x * 2 * 3 + 4 * y * 3 + 4 * 2 * z = 24 + 24 + 24) := by
   constructor <;> intro h <;> linarith
 
-/-
-The statement as originally given had `24 + 24` (i.e. `48`) on the right-hand side:
 
-theorem strang_13_3_13_original
-  {x y z : ℝ} :
-  6 * (x - 4) + 12 * (y - 2) + 8 * (z - 3) = 0 ↔
-  (x * 2 * 3 + 4 * y * 3 + 4 * 2 * z = 24 + 24) := by
-sorry
-
-This is false: the left-hand side says `6x + 12y + 8z = 72`, not `48`.
-(Indeed the plane passes through `(4,2,3)`, where `6*4 + 12*2 + 8*3 = 72`.)
-The counterexample is recorded below.
--/
 
 /-- The original form of the statement, with `24 + 24` on the right, is false:
 at the point `(4,2,3)` of the surface the left side holds but the right side fails. -/
