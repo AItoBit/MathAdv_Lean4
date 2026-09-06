@@ -235,12 +235,7 @@ theorem stein_17 {t : ℝ} (ht : 0 < t) :
 
 The statement as originally posed,
 
-```
-theorem stein_17 (t : ℝ) :
-  (1 / Real.pi) * ∑' (n : ℤ), t / (t^2 + (n : ℝ) ^ 2) =
-    ∑' (n : ℤ), Real.exp (-2 * t * |(n : ℝ)|) := by
-  sorry
-```
+
 
 is not correct: with the standard normalisation of the Fourier transform the transform of
 `x ↦ t / (π (x² + t²))` is `ξ ↦ e^{-2 π t |ξ|}`, not `ξ ↦ e^{-2 t |ξ|}`.  Indeed the left-hand
