@@ -1,8 +1,9 @@
 import Mathlib
 
-/-- Subgrupo de torsión de un grupo abeliano aditivo G. -/
-def torsionSubgroup (G : Type*) [AddCommGroup G] : AddSubgroup G where
-  carrier := { g : G | ∃ n : ℕ, n ≠ 0 ∧ n • g = 0 }
+/-- The subgroup of torsion elements (elements of finite order) of an additive
+commutative group. -/
+def torsionSubgroup (G : Type*) [AddCommGroup G] : AddSubgroup G :=
+{ carrier := { g : G | ∃ n : ℕ, n ≠ 0 ∧ n • g = 0 }
   zero_mem' := by
     refine ⟨1, by decide, ?_⟩
     simp
@@ -24,17 +25,32 @@ def torsionSubgroup (G : Type*) [AddCommGroup G] : AddSubgroup G where
     intro x hx
     rcases hx with ⟨n, hn, hx⟩
     refine ⟨n, hn, ?_⟩
-    simp [hx]
+    simp [hx] }
 
-/-- Teorema Fundamental de Grupos Abelianos Finitamente Generados:
-    El submódulo/subgrupo de torsión de cualquier ℤ-módulo finitamente generado es finito. -/
-axiom finitely_generated_abelian_torsion_finite
-    (G : Type*) [AddCommGroup G] [Module.Finite ℤ G] :
-    Finite (torsionSubgroup G)
+/-- The torsion subgroup, viewed as a `ℤ`-submodule. -/
+def torsionSubmodule (G : Type*) [AddCommGroup G] : Submodule ℤ G :=
+  AddSubgroup.toIntSubmodule (torsionSubgroup G)
 
-/-- Teorema (number_theory_4_9, Q221 / question_4):
-    Si G es un grupo abeliano finitamente generado, su subgrupo de torsión es finito. -/
+/-- The torsion submodule of a finitely generated abelian group is finitely generated,
+since `ℤ` is a Noetherian ring. -/
+instance torsionSubmodule_finite (G : Type*) [AddCommGroup G] [Module.Finite ℤ G] :
+    Module.Finite ℤ (torsionSubmodule G) := by
+  have : IsNoetherian ℤ G := inferInstance
+  infer_instance
+
+/-- Every element of the torsion submodule is annihilated by a nonzero integer. -/
+theorem torsionSubmodule_isTorsion (G : Type*) [AddCommGroup G] :
+    Module.IsTorsion ℤ (torsionSubmodule G) := by
+  rintro ⟨x, n, hn, hx⟩
+  refine ⟨⟨(n : ℤ), ?_⟩, ?_⟩
+  · simpa [mem_nonZeroDivisors_iff_ne_zero] using hn
+  · ext
+    simpa [natCast_zsmul] using hx
+
+/-- The subgroup of elements of finite order in a finitely generated abelian group is
+finite. -/
 theorem question_4
-    (G : Type*) [AddCommGroup G] [Module.Finite ℤ G] :
-    Finite (torsionSubgroup G) := by
-  exact finitely_generated_abelian_torsion_finite G
+  (G : Type*) [AddCommGroup G] [Module.Finite ℤ G] :
+  Finite (torsionSubgroup G) :=
+  Module.finite_of_fg_torsion (torsionSubmodule G) (torsionSubmodule_isTorsion G)
+
