@@ -123,20 +123,11 @@ def model : NTStructure where
 
 end LearyModel
 
-/-- `N ⊬ (∀x) ¬(x < x)`: there is a model of `N` containing an element
-`a` with `a < a`. -/
-theorem Leary_Kristiansen_11 :
-    ∃ A : NTStructure, ∃ a : A.M, A.lt a a :=
-  ⟨LearyModel.model, none, trivial⟩
-
-/-- Equivalent phrasing: the sentence `(∀x) ¬(x < x)` is not a semantic
-consequence of `N`, hence (by soundness) not provable from `N`. -/
 theorem Leary_Kristiansen_11' :
     ¬ (∀ A : NTStructure, ∀ a : A.M, ¬ A.lt a a) := by
-  obtain ⟨A, a, ha⟩ := Leary_Kristiansen_11
-  exact fun h => h A a ha
+  exact fun h => h LearyModel.model none trivial
 
 /-- Demostración por construcción: existe un modelo de N donde algún elemento satisface `lt a a`. -/
 theorem Leary_Kristiansen_11 :
   ∃ A : NTStructure, ∃ a : A.M, A.lt a a := by
-  sorry
+  exact ⟨LearyModel.model, none, trivial⟩
