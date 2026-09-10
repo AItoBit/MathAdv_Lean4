@@ -191,9 +191,10 @@ lemma badSet_measure_zero (N : ℕ) : P (badSet N X) = 0 := by
   have htend : Tendsto (fun K : ℕ => ENNReal.ofReal ((9 / 10 : ℝ) ^ K)) atTop (nhds 0) := by
     have h : Tendsto (fun K : ℕ => (9 / 10 : ℝ) ^ K) atTop (nhds 0) :=
       tendsto_pow_atTop_nhds_zero_of_lt_one (by norm_num) (by norm_num)
-    have := (ENNReal.continuous_ofReal.tendsto 0).comp h
-    simpa using this
-  refine le_antisymm ?_ (zero_le _)
+    have h_comp : Tendsto (fun K : ℕ => ENNReal.ofReal ((9 / 10 : ℝ) ^ K)) atTop (nhds (ENNReal.ofReal 0)) :=
+      (ENNReal.continuous_ofReal.tendsto 0).comp h
+    exact ENNReal.ofReal_zero ▸ h_comp
+  refine le_antisymm ?_ zero_le
   exact ge_of_tendsto' htend (fun K => badSet_measure_le hX N K)
 
 end Measure
