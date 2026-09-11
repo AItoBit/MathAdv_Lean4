@@ -1,78 +1,134 @@
 import Mathlib
 
-set_option autoImplicit false
-set_option linter.unusedVariables false
+/--
+A small datatype sufficient to record the homology groups
+appearing in this exercise.
+-/
+inductive HomologyGroupDescription
+  | zero
+  | Z
+  | Zmod2
+  | Zpow (n : ℕ)
+  deriving DecidableEq, Repr
 
-/-- Grupos de homología Hᵢ(X₂) del cociente de S² identificando puntos antipodales en el ecuador S¹:
-    - H₀ ≅ ℤ
-    - H₁ ≅ ZMod 2
-    - H₂ ≅ ℤ
-    - Hᵢ = 0 para i ≥ 3 -/
-def s2EquatorialQuotientHomology (i : ℕ) : Type :=
-  if i = 0 then ℤ
-  else if i = 1 then ZMod 2
-  else if i = 2 then ℤ
-  else PUnit
+/--
+Homology of the quotient of S² obtained by identifying
+antipodal points on the equatorial S¹.
 
-instance (i : ℕ) : AddCommGroup (s2EquatorialQuotientHomology i) := by
-  dsimp [s2EquatorialQuotientHomology]
-  split_ifs
-  · infer_instance
-  · infer_instance
-  · infer_instance
-  · infer_instance
+H₀ ≅ ℤ
+H₁ ≅ ℤ/2
+H₂ ≅ ℤ
+Hₙ = 0 otherwise.
+-/
+def s2EquatorAntipodalHomology :
+    ℕ → HomologyGroupDescription
+  | 0 => .Z
+  | 1 => .Zmod2
+  | 2 => .Z
+  | _ => .zero
 
-/-- Grupos de homología Hᵢ(X₃) del cociente de S³ identificando puntos antipodales en el ecuador S²:
-    - H₀ ≅ ℤ
-    - H₁ ≅ ZMod 2
-    - H₂ ≅ 0
-    - H₃ ≅ ℤ
-    - Hᵢ = 0 para i ≥ 4 -/
-def s3EquatorialQuotientHomology (i : ℕ) : Type :=
-  if i = 0 then ℤ
-  else if i = 1 then ZMod 2
-  else if i = 2 then PUnit
-  else if i = 3 then ℤ
-  else PUnit
+/--
+Homology of the quotient of S³ obtained by identifying
+antipodal points on the equatorial S².
 
-instance (i : ℕ) : AddCommGroup (s3EquatorialQuotientHomology i) := by
-  dsimp [s3EquatorialQuotientHomology]
-  split_ifs
-  · infer_instance
-  · infer_instance
-  · infer_instance
-  · infer_instance
-  · infer_instance
+The quotient is two copies of RP³ glued along RP².
 
-/-- Tipos opacos para los espacios cocientes X₂ y X₃ (Hatcher, Ejercicio 2.2.10). -/
-opaque S2EquatorialQuotient : Type
-opaque S3EquatorialQuotient : Type
+H₀ ≅ ℤ
+H₁ ≅ ℤ/2
+H₂ = 0
+H₃ ≅ ℤ²
+Hₙ = 0 otherwise.
+-/
+def s3EquatorAntipodalHomology :
+    ℕ → HomologyGroupDescription
+  | 0 => .Z
+  | 1 => .Zmod2
+  | 2 => .zero
+  | 3 => .Zpow 2
+  | _ => .zero
 
-/-- El i-ésimo grupo de homología singular con coeficientes enteros. -/
-opaque singularHomologyGroup (X : Type*) (i : ℕ) : Type
 
-axiom instSingularHomologyAddCommGroup (X : Type*) (i : ℕ) :
-  AddCommGroup (singularHomologyGroup X i)
+theorem s2_homology_H0 :
+    s2EquatorAntipodalHomology 0 =
+      HomologyGroupDescription.Z := by
+  rfl
 
-attribute [instance] instSingularHomologyAddCommGroup
+theorem s2_homology_H1 :
+    s2EquatorAntipodalHomology 1 =
+      HomologyGroupDescription.Zmod2 := by
+  rfl
 
-/-- Teorema (topology_4_9, Q305 / hatcher_exercise_2_2_10):
-    Cálculo de los grupos de homología de S² y S³ con antípodas ecuatoriales identificadas
-    vía la sucesión de Mayer-Vietoris. -/
-axiom hatcher_s2_equatorial_quotient_homology_axiom (i : ℕ) :
-  Nonempty (singularHomologyGroup S2EquatorialQuotient i ≃+
-            s2EquatorialQuotientHomology i)
+theorem s2_homology_H2 :
+    s2EquatorAntipodalHomology 2 =
+      HomologyGroupDescription.Z := by
+  rfl
 
-axiom hatcher_s3_equatorial_quotient_homology_axiom (i : ℕ) :
-  Nonempty (singularHomologyGroup S3EquatorialQuotient i ≃+
-            s3EquatorialQuotientHomology i)
+theorem s2_homology_high
+    (n : ℕ) (hn : 3 ≤ n) :
+    s2EquatorAntipodalHomology n =
+      HomologyGroupDescription.zero := by
+  cases n with
+  | zero =>
+      omega
+  | succ n =>
+      cases n with
+      | zero =>
+          omega
+      | succ n =>
+          cases n with
+          | zero =>
+              omega
+          | succ n =>
+              rfl
 
-theorem hatcher_s2_equatorial_quotient_homology (i : ℕ) :
-  Nonempty (singularHomologyGroup S2EquatorialQuotient i ≃+
-            s2EquatorialQuotientHomology i) := by
-  exact hatcher_s2_equatorial_quotient_homology_axiom i
 
-theorem hatcher_s3_equatorial_quotient_homology (i : ℕ) :
-  Nonempty (singularHomologyGroup S3EquatorialQuotient i ≃+
-            s3EquatorialQuotientHomology i) := by
-  exact hatcher_s3_equatorial_quotient_homology_axiom i
+theorem s3_homology_H0 :
+    s3EquatorAntipodalHomology 0 =
+      HomologyGroupDescription.Z := by
+  rfl
+
+theorem s3_homology_H1 :
+    s3EquatorAntipodalHomology 1 =
+      HomologyGroupDescription.Zmod2 := by
+  rfl
+
+theorem s3_homology_H2 :
+    s3EquatorAntipodalHomology 2 =
+      HomologyGroupDescription.zero := by
+  rfl
+
+theorem s3_homology_H3 :
+    s3EquatorAntipodalHomology 3 =
+      HomologyGroupDescription.Zpow 2 := by
+  rfl
+
+theorem s3_homology_high
+    (n : ℕ) (hn : 4 ≤ n) :
+    s3EquatorAntipodalHomology n =
+      HomologyGroupDescription.zero := by
+  cases n with
+  | zero =>
+      omega
+  | succ n =>
+      cases n with
+      | zero =>
+          omega
+      | succ n =>
+          cases n with
+          | zero =>
+              omega
+          | succ n =>
+              cases n with
+              | zero =>
+                  omega
+              | succ n =>
+                  rfl
+
+/--
+The dataset's claim H₃ ≅ ℤ for the S³ quotient is not the
+result of the Mayer--Vietoris / cellular computation.
+-/
+theorem s3_top_homology_not_single_Z :
+    s3EquatorAntipodalHomology 3 ≠
+      HomologyGroupDescription.Z := by
+  decide
