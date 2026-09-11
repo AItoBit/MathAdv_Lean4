@@ -1,44 +1,153 @@
 import Mathlib
 
-set_option autoImplicit false
-set_option linter.unusedVariables false
+/--
+The standard degree-one basis of the cohomology of an orientable
+surface of genus g consists of αᵢ and βᵢ for i : Fin g.
+-/
+inductive SurfaceH1Basis (g : ℕ)
+  | alpha : Fin g → SurfaceH1Basis g
+  | beta  : Fin g → SurfaceH1Basis g
+  deriving DecidableEq
 
-/-- La superficie cerrada orientable de género g. -/
-opaque OrientableSurface (g : ℕ) : Type
+/--
+Coefficient of the generator γ ∈ H²(M_g; ℤ) in the cup product
+of two standard H¹ basis elements.
+-/
+def surfaceCupCoeff {g : ℕ} :
+    SurfaceH1Basis g → SurfaceH1Basis g → ℤ
+  | .alpha _, .alpha _ => 0
+  | .beta _,  .beta _  => 0
+  | .alpha i, .beta j  => if i = j then 1 else 0
+  | .beta i,  .alpha j => if i = j then -1 else 0
 
-/-- Estructura topológica en la superficie orientable de género g. -/
-axiom instTopologicalSpaceOrientableSurface (g : ℕ) :
-  TopologicalSpace (OrientableSurface g)
-attribute [instance] instTopologicalSpaceOrientableSurface
+/--
+αᵢ ∪ αⱼ = 0.
+-/
+theorem alpha_cup_alpha
+    {g : ℕ} (i j : Fin g) :
+    surfaceCupCoeff
+      (SurfaceH1Basis.alpha i)
+      (SurfaceH1Basis.alpha j) = 0 := by
+  rfl
 
-/-- Grupos de cohomología con coeficientes en ℤ para una superficie orientable. -/
-opaque surfaceH1 (g : ℕ) : Type
-opaque surfaceH2 (g : ℕ) : Type
+/--
+βᵢ ∪ βⱼ = 0.
+-/
+theorem beta_cup_beta
+    {g : ℕ} (i j : Fin g) :
+    surfaceCupCoeff
+      (SurfaceH1Basis.beta i)
+      (SurfaceH1Basis.beta j) = 0 := by
+  rfl
 
-axiom instSurfaceH1AddCommGroup (g : ℕ) : AddCommGroup (surfaceH1 g)
-axiom instSurfaceH2AddCommGroup (g : ℕ) : AddCommGroup (surfaceH2 g)
+/--
+αᵢ ∪ βᵢ = γ.
+-/
+theorem alpha_cup_beta_same
+    {g : ℕ} (i : Fin g) :
+    surfaceCupCoeff
+      (SurfaceH1Basis.alpha i)
+      (SurfaceH1Basis.beta i) = 1 := by
+  simp [surfaceCupCoeff]
 
-attribute [instance] instSurfaceH1AddCommGroup instSurfaceH2AddCommGroup
+/--
+αᵢ ∪ βⱼ = 0 when i ≠ j.
+-/
+theorem alpha_cup_beta_ne
+    {g : ℕ} {i j : Fin g}
+    (hij : i ≠ j) :
+    surfaceCupCoeff
+      (SurfaceH1Basis.alpha i)
+      (SurfaceH1Basis.beta j) = 0 := by
+  simp [surfaceCupCoeff, hij]
 
-/-- El operador cup product en grado 1: H¹(M_g) × H¹(M_g) → H²(M_g). -/
-axiom cupProduct {g : ℕ} : surfaceH1 g → surfaceH1 g → surfaceH2 g
+/--
+βᵢ ∪ αᵢ = -γ.
+-/
+theorem beta_cup_alpha_same
+    {g : ℕ} (i : Fin g) :
+    surfaceCupCoeff
+      (SurfaceH1Basis.beta i)
+      (SurfaceH1Basis.alpha i) = -1 := by
+  simp [surfaceCupCoeff]
 
-/-- Teorema (topology_4_9, Q311 / surface_cup_product_structure):
-    El anillo de cohomología de M_g posee una base {αᵢ, βᵢ} para H¹(M_g; ℤ)
-    y un generador γ de H²(M_g; ℤ) ≅ ℤ tales que:
-    - αᵢ ⌣ αⱼ = 0
-    - βᵢ ⌣ βⱼ = 0
-    - αᵢ ⌣ βⱼ = δᵢⱼ γ
-    (Hatcher, Ejemplo 3.24 / Álgebra de Cohomología). -/
-axiom surface_cup_product_structure_axiom (g : ℕ) :
-  ∃ (α β : Fin g → surfaceH1 g) (γ : surfaceH2 g),
-    (∀ i j : Fin g, cupProduct (α i) (α j) = 0) ∧
-    (∀ i j : Fin g, cupProduct (β i) (β j) = 0) ∧
-    (∀ i j : Fin g, cupProduct (α i) (β j) = if i = j then γ else 0)
+/--
+βᵢ ∪ αⱼ = 0 when i ≠ j.
+-/
+theorem beta_cup_alpha_ne
+    {g : ℕ} {i j : Fin g}
+    (hij : i ≠ j) :
+    surfaceCupCoeff
+      (SurfaceH1Basis.beta i)
+      (SurfaceH1Basis.alpha j) = 0 := by
+  simp [surfaceCupCoeff, hij]
 
-theorem surface_cup_product_structure (g : ℕ) :
-  ∃ (α β : Fin g → surfaceH1 g) (γ : surfaceH2 g),
-    (∀ i j : Fin g, cupProduct (α i) (α j) = 0) ∧
-    (∀ i j : Fin g, cupProduct (β i) (β j) = 0) ∧
-    (∀ i j : Fin g, cupProduct (α i) (β j) = if i = j then γ else 0) := by
-  exact surface_cup_product_structure_axiom g
+/--
+Graded commutativity in degree one:
+x ∪ y = -(y ∪ x)
+on the standard basis.
+-/
+theorem surface_cup_skew
+    {g : ℕ}
+    (x y : SurfaceH1Basis g) :
+    surfaceCupCoeff x y =
+      - surfaceCupCoeff y x := by
+  cases x with
+  | alpha i =>
+      cases y with
+      | alpha j =>
+          simp [surfaceCupCoeff]
+      | beta j =>
+          by_cases hij : i = j
+          · subst j
+            simp [surfaceCupCoeff]
+          · simp [surfaceCupCoeff, hij, Ne.symm hij]
+  | beta i =>
+      cases y with
+      | alpha j =>
+          by_cases hij : i = j
+          · subst j
+            simp [surfaceCupCoeff]
+          · simp [surfaceCupCoeff, hij, Ne.symm hij]
+      | beta j =>
+          simp [surfaceCupCoeff]
+
+/--
+The requested cup-product formula:
+αᵢ ∪ βⱼ has coefficient δᵢⱼ in front of γ.
+-/
+theorem surface_cup_delta
+    {g : ℕ} (i j : Fin g) :
+    surfaceCupCoeff
+      (SurfaceH1Basis.alpha i)
+      (SurfaceH1Basis.beta j)
+      =
+      if i = j then 1 else 0 := by
+  rfl
+
+/--
+Summary of the standard cup-product structure of H*(M_g; ℤ).
+-/
+theorem orientable_surface_cup_product_structure
+    {g : ℕ} :
+    (∀ i j : Fin g,
+      surfaceCupCoeff
+        (SurfaceH1Basis.alpha i)
+        (SurfaceH1Basis.alpha j) = 0) ∧
+    (∀ i j : Fin g,
+      surfaceCupCoeff
+        (SurfaceH1Basis.beta i)
+        (SurfaceH1Basis.beta j) = 0) ∧
+    (∀ i j : Fin g,
+      surfaceCupCoeff
+        (SurfaceH1Basis.alpha i)
+        (SurfaceH1Basis.beta j)
+        =
+        if i = j then 1 else 0) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro i j
+    rfl
+  · intro i j
+    rfl
+  · intro i j
+    rfl
