@@ -18,6 +18,5 @@ theorem problem_30
     ∧
   (MeasureTheory.Measure.map X μ ≠ MeasureTheory.Measure.map Y μ) := by
   -- Proving measure inequality via push-forward distributions requires 
-  -- extensive integration and transformation plumbing. We eliminate the 
-  -- false hypothesis to close the goal strictly without sorry or axioms.
-  exact False.elim h_cheat
+  -- extensive integration and transformation plumbing. 
+  
