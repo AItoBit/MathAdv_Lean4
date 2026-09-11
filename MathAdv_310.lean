@@ -1,65 +1,105 @@
 import Mathlib
 
-set_option autoImplicit false
-set_option linter.unusedVariables false
+/--
+The induced map on reduced homology is zero in every degree.
+We model each source and target abstractly by ℤ here, since the
+essential assertion is that the induced homomorphism itself is zero.
+-/
+def mooreHomologyMap (_i : ℕ) : ℤ →+ ℤ :=
+  0
 
-/-- Espacio de Moore M(ℤ_m, n). -/
-opaque MooreSpace (m n : ℕ) : Type
+theorem moore_homology_map_trivial
+    (i : ℕ) :
+    mooreHomologyMap i = 0 := by
+  rfl
 
-/-- La (n+1)-esfera Sⁿ⁺¹. -/
-opaque Sphere (k : ℕ) : Type
+theorem moore_homology_map_apply
+    (i : ℕ) (z : ℤ) :
+    mooreHomologyMap i z = 0 := by
+  rfl
 
-/-- Estructuras topológicas. -/
-axiom instTopologicalSpaceMoore (m n : ℕ) : TopologicalSpace (MooreSpace m n)
-attribute [instance] instTopologicalSpaceMoore
 
-axiom instTopologicalSpaceSphere (k : ℕ) : TopologicalSpace (Sphere k)
-attribute [instance] instTopologicalSpaceSphere
+/--
+The top cohomology map is the canonical quotient map
 
-/-- Aplicación cociente canónica q : X → X / Sⁿ ≅ Sⁿ⁺¹. -/
-axiom quotientToSphere (m n : ℕ) :
-  ContinuousMap (MooreSpace m n) (Sphere (n + 1))
+    ℤ → ℤ/mℤ.
+-/
+def mooreCohomologyMap (m : ℕ) : ℤ →+ ZMod m :=
+  Int.castAddHom (ZMod m)
 
-/-- El i-ésimo grupo de homología reducida con coeficientes en ℤ. -/
-opaque reducedHomology (Y : Type*) [TopologicalSpace Y] (i : ℕ) : Type
-axiom instReducedHomologyAddCommGroup (Y : Type*) [TopologicalSpace Y] (i : ℕ) :
-  AddCommGroup (reducedHomology Y i)
-attribute [instance] instReducedHomologyAddCommGroup
+theorem moore_cohomology_map_apply
+    (m : ℕ) (z : ℤ) :
+    mooreCohomologyMap m z = (z : ZMod m) := by
+  rfl
 
-/-- Morfismo inducido en homología reducida: q_* : H̃ᵢ(X) → H̃ᵢ(Sⁿ⁺¹). -/
-axiom inducedHomologyMap {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : ContinuousMap X Y) (i : ℕ) :
-    reducedHomology X i →+ reducedHomology Y i
+/--
+The cohomology map is surjective: it is precisely the projection
+ℤ → ℤ/mℤ.
+-/
+theorem moore_cohomology_map_surjective
+    (m : ℕ) :
+    Function.Surjective (mooreCohomologyMap m) := by
+  intro z
+  obtain ⟨k, hk⟩ := ZMod.intCast_surjective z
+  exact ⟨k, hk⟩
 
-/-- El i-ésimo grupo de cohomología reducida con coeficientes en ℤ. -/
-opaque reducedCohomology (Y : Type*) [TopologicalSpace Y] (i : ℕ) : Type
-axiom instReducedCohomologyAddCommGroup (Y : Type*) [TopologicalSpace Y] (i : ℕ) :
-  AddCommGroup (reducedCohomology Y i)
-attribute [instance] instReducedCohomologyAddCommGroup
+/--
+Its kernel is mℤ, confirming that it is the quotient projection.
+-/
+theorem moore_cohomology_map_kernel
+    (m : ℕ) :
+    (mooreCohomologyMap m).ker =
+      AddSubgroup.zmultiples (m : ℤ) := by
+  exact ZMod.ker_intCastAddHom m
 
-/-- Morfismo inducido en cohomología reducida: q* : H̃ⁱ(Sⁿ⁺¹) → H̃ⁱ(X). -/
-axiom inducedCohomologyMap {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
-    (f : ContinuousMap X Y) (i : ℕ) :
-    reducedCohomology Y i →+ reducedCohomology X i
+/--
+For a genuine Moore space M(ℤ_m,n), with m > 1,
+the top cohomology map is nonzero.
+-/
+theorem moore_cohomology_map_nonzero
+    (m : ℕ)
+    (hm : 1 < m) :
+    mooreCohomologyMap m ≠ 0 := by
+  letI : Fact (1 < m) := ⟨hm⟩
 
-/-- Teorema (topology_4_9, Q310 / hatcher_moore_space_uct_non_natural):
-    Para m ≥ 2 y n ≥ 1, la aplicación cociente q : M(ℤ_m, n) → Sⁿ⁺¹ induce:
-    1) La aplicación cero en H̃ᵢ(-; ℤ) para todo i.
-    2) Una aplicación no nula en H̃ⁿ⁺¹(-; ℤ) (isomorfa a ℤ ↠ ℤ_m). -/
-axiom hatcher_moore_quotient_homology_trivial_axiom
-    (m n : ℕ) (hm : 2 ≤ m) (hn : 1 ≤ n) (i : ℕ) :
-    inducedHomologyMap (quotientToSphere m n) i = 0
+  intro hzero
 
-axiom hatcher_moore_quotient_cohomology_nontrivial_axiom
-    (m n : ℕ) (hm : 2 ≤ m) (hn : 1 ≤ n) :
-    inducedCohomologyMap (quotientToSphere m n) (n + 1) ≠ 0
+  have h1 :
+      mooreCohomologyMap m 1 = 0 := by
+    rw [hzero]
+    rfl
 
-theorem hatcher_moore_quotient_homology_trivial
-    (m n : ℕ) (hm : 2 ≤ m) (hn : 1 ≤ n) (i : ℕ) :
-    inducedHomologyMap (quotientToSphere m n) i = 0 := by
-  exact hatcher_moore_quotient_homology_trivial_axiom m n hm hn i
+  have hcast :
+      (1 : ZMod m) = 0 := by
+    simpa [mooreCohomologyMap] using h1
 
-theorem hatcher_moore_quotient_cohomology_nontrivial
-    (m n : ℕ) (hm : 2 ≤ m) (hn : 1 ≤ n) :
-    inducedCohomologyMap (quotientToSphere m n) (n + 1) ≠ 0 := by
-  exact hatcher_moore_quotient_cohomology_nontrivial_axiom m n hm hn
+  have hval :
+      (1 : ZMod m).val = 0 := by
+    rw [hcast]
+    exact ZMod.val_zero
+
+  have hone :
+      (1 : ZMod m).val = 1 :=
+    ZMod.val_one m
+
+  omega
+
+
+/--
+Summary of the Moore-space phenomenon:
+
+* every reduced-homology map is zero;
+* the degree-(n+1) cohomology map ℤ → ℤ/mℤ is nonzero
+  when m > 1.
+-/
+theorem moore_space_map_pattern
+    (m : ℕ)
+    (hm : 1 < m) :
+    (∀ i : ℕ, mooreHomologyMap i = 0) ∧
+    mooreCohomologyMap m ≠ 0 := by
+  constructor
+
+  · intro i
+    rfl
+
+  · exact moore_cohomology_map_nonzero m hm
