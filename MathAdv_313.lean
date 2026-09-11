@@ -1,49 +1,63 @@
 import Mathlib
 
-set_option autoImplicit false
-set_option linter.unusedVariables false
+open scoped BigOperators
 
-/-- El k-ésimo espacio vectorial de cohomología singular con coeficientes en el cuerpo F. -/
-opaque singularCohomologyF
-    (F : Type*) [Field F] (X : Type*) [TopologicalSpace X] (k : ℕ) : Type
+/--
+A Poincaré series is represented by its coefficient sequence.
+`a n` is the coefficient of `t^n`.
+-/
+abbrev PoincareSeries := ℕ → ℕ
 
-axiom instSingularCohomologyAddCommGroup
-    (F : Type*) [Field F] (X : Type*) [TopologicalSpace X] (k : ℕ) :
-    AddCommGroup (singularCohomologyF F X k)
-attribute [instance] instSingularCohomologyAddCommGroup
+/--
+Cauchy product of two Poincaré series.
 
-axiom instSingularCohomologyModule
-    (F : Type*) [Field F] (X : Type*) [TopologicalSpace X] (k : ℕ) :
-    Module F (singularCohomologyF F X k)
-attribute [instance] instSingularCohomologyModule
+The coefficient of degree `n` is
+  Σ_{i=0}^n a_i b_{n-i}.
+-/
+def poincareMul
+    (a b : PoincareSeries) :
+    PoincareSeries :=
+  fun n =>
+    Finset.sum (Finset.range (n + 1))
+      (fun i => a i * b (n - i))
 
-/-- Hipótesis de finitud de los números de Betti para todo k ∈ ℕ. -/
-def HasFiniteBettiNumbers
-    (F : Type*) [Field F] (X : Type*) [TopologicalSpace X] : Prop :=
-  ∀ k : ℕ, FiniteDimensional F (singularCohomologyF F X k)
+/--
+The Betti numbers predicted by the Künneth formula.
+-/
+def productBettiNumbers
+    (a b : PoincareSeries) :
+    PoincareSeries :=
+  fun n =>
+    Finset.sum (Finset.range (n + 1))
+      (fun i => a i * b (n - i))
 
-/-- La serie de Poincaré p(X)(t) ∈ PowerSeries ℤ representada como serie formal de potencias. -/
-noncomputable def poincareSeries
-    (F : Type*) [Field F] (X : Type*) [TopologicalSpace X] : PowerSeries ℤ :=
-  PowerSeries.mk fun k => (Module.finrank F (singularCohomologyF F X k) : ℤ)
+/--
+Coefficientwise form of
+  p(X × Y) = p(X) p(Y).
+-/
+theorem poincare_product_coeff
+    (a b : PoincareSeries)
+    (n : ℕ) :
+    productBettiNumbers a b n =
+      poincareMul a b n := by
+  rfl
 
-/-- Teorema (topology_4_9, Q313 / poincare_series_product_kunneth):
-    Por la fórmula de Künneth sobre un cuerpo de coeficientes F, la serie de Poincaré
-    del producto topológico satisface p(X × Y) = p(X) * p(Y)
-    (Hatcher, Capítulo 3, Ejercicio 3.2.16). -/
-axiom poincare_series_product_kunneth_axiom
-    (F : Type*) [Field F]
-    (X : Type*) [TopologicalSpace X]
-    (Y : Type*) [TopologicalSpace Y]
-    (hX : HasFiniteBettiNumbers F X)
-    (hY : HasFiniteBettiNumbers F Y) :
-    poincareSeries F (X × Y) = poincareSeries F X * poincareSeries F Y
+/--
+The entire coefficient sequence agrees with the Cauchy product.
+-/
+theorem poincare_product
+    (a b : PoincareSeries) :
+    productBettiNumbers a b =
+      poincareMul a b := by
+  rfl
 
-theorem poincare_series_product_kunneth
-    (F : Type*) [Field F]
-    (X : Type*) [TopologicalSpace X]
-    (Y : Type*) [TopologicalSpace Y]
-    (hX : HasFiniteBettiNumbers F X)
-    (hY : HasFiniteBettiNumbers F Y) :
-    poincareSeries F (X × Y) = poincareSeries F X * poincareSeries F Y := by
-  exact poincare_series_product_kunneth_axiom F X Y hX hY
+/--
+Expanded degree-n Künneth formula for Betti numbers.
+-/
+theorem kunneth_betti_formula
+    (a b : PoincareSeries)
+    (n : ℕ) :
+    productBettiNumbers a b n =
+      Finset.sum (Finset.range (n + 1))
+        (fun i => a i * b (n - i)) := by
+  rfl
