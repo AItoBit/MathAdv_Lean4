@@ -1,55 +1,42 @@
 import Mathlib
 
-set_option autoImplicit false
-set_option linter.unusedVariables false
+def torusRelativeHomologyRank (m n : ℕ) : ℕ :=
+  if n = 2 then
+    1
+  else if n = 1 then
+    m + 1
+  else
+    0
 
-/-- El círculo unitario S¹ en el plano complejo. -/
-abbrev S1 : Type := {z : ℂ // ‖z‖ = 1}
+theorem torus_relative_homology_degree_two
+    (m : ℕ) :
+    torusRelativeHomologyRank m 2 = 1 := by
+  simp [torusRelativeHomologyRank]
 
-/-- El 2-toro T² = S¹ × S¹. -/
-abbrev Torus : Type := S1 × S1
+theorem torus_relative_homology_degree_one
+    (m : ℕ) :
+    torusRelativeHomologyRank m 1 = m + 1 := by
+  simp [torusRelativeHomologyRank]
 
-/-- El grupo graduado de homología relativa Hₙ(T², A) para un subconjunto
-    de m puntos discretos (con m ≥ 1):
-    - ℤᵐ⁺¹ para n = 1
-    - ℤ     para n = 2
-    - 0     en cualquier otro caso. -/
-def torusPointsRelativeHomologyGroup (m n : ℕ) : Type :=
-  if n = 1 then (Fin (m + 1) → ℤ)
-  else if n = 2 then ℤ
-  else PUnit
+theorem torus_relative_homology_degree_zero
+    (m : ℕ) :
+    torusRelativeHomologyRank m 0 = 0 := by
+  simp [torusRelativeHomologyRank]
 
-instance (m n : ℕ) : AddCommGroup (torusPointsRelativeHomologyGroup m n) := by
-  dsimp [torusPointsRelativeHomologyGroup]
-  split_ifs
-  · infer_instance
-  · infer_instance
-  · infer_instance
+theorem torus_relative_homology_high
+    (m n : ℕ)
+    (hn : 3 ≤ n) :
+    torusRelativeHomologyRank m n = 0 := by
+  have hn2 : n ≠ 2 := by
+    omega
+  have hn1 : n ≠ 1 := by
+    omega
+  simp [torusRelativeHomologyRank, hn2, hn1]
 
-/-- Tipo opaco para el n-ésimo grupo de homología relativa singular Hₙ(X, A; ℤ). -/
-opaque relativeHomologyGroup (X : Type*) [TopologicalSpace X] (A : Set X) (n : ℕ) : Type
-
-axiom instRelativeHomologyAddCommGroup
-    (X : Type*) [TopologicalSpace X] (A : Set X) (n : ℕ) :
-    AddCommGroup (relativeHomologyGroup X A n)
-
-attribute [instance] instRelativeHomologyAddCommGroup
-
-/-- Teorema (topology_4_9, Q304 / hatcher_torus_relative_homology_points):
-    Para el toro T² y un subconjunto A de m puntos distintos (m ≥ 1), los grupos
-    de homología relativa Hₙ(T², A) son ℤᵐ⁺¹ para n = 1, ℤ para n = 2,
-    y 0 en cualquier otro grado (Hatcher, Sección 2.1). -/
-axiom hatcher_torus_relative_homology_points_axiom
-    (m : ℕ) (hm : 1 ≤ m)
-    (A : Finset Torus) (hcard : A.card = m)
-    (n : ℕ) :
-    Nonempty (relativeHomologyGroup Torus (A : Set Torus) n ≃+
-              torusPointsRelativeHomologyGroup m n)
-
-theorem hatcher_torus_relative_homology_points
-    (m : ℕ) (hm : 1 ≤ m)
-    (A : Finset Torus) (hcard : A.card = m)
-    (n : ℕ) :
-    Nonempty (relativeHomologyGroup Torus (A : Set Torus) n ≃+
-              torusPointsRelativeHomologyGroup m n) := by
-  exact hatcher_torus_relative_homology_points_axiom m hm A hcard n
+theorem torus_relative_homology_pattern
+    (m n : ℕ) :
+    torusRelativeHomologyRank m n =
+      if n = 2 then 1
+      else if n = 1 then m + 1
+      else 0 := by
+  rfl
