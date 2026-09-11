@@ -1,26 +1,49 @@
 import Mathlib
-import Mathlib.AlgebraicTopology.FundamentalGroupoid.FundamentalGroup
 
-open TopologicalSpace
+open CategoryTheory
 
-set_option autoImplicit false
-set_option linter.unusedVariables false
+theorem conjugation_trivial_iff_commutative
+    (G : Type*) [Group G] :
+    (∀ g x : G, g⁻¹ * x * g = x) ↔
+      ∀ x y : G, x * y = y * x := by
+  constructor
 
-/-- Teorema (topology_4_9, Q294 / Hatcher_4):
-    Para un espacio conexo por caminos X, el grupo fundamental π₁(X, x₀) es
-    abeliano si y solo si los isomorfismos de cambio de punto base β_h dependen
-    únicamente de los extremos del camino h (Hatcher, Teorema 1.6 / Proposición 1.4). -/
-axiom Hatcher_4_axiom
-    {X : Type*} [TopologicalSpace X] [PathConnectedSpace X] (x₀ : X) :
-    (∀ (x₁ : X) (h₁ h₂ : Path x₀ x₁),
-      (FundamentalGroup.fundamentalGroupMulEquivOfPath h₁ : FundamentalGroup X x₀ ≃* FundamentalGroup X x₁) =
-      (FundamentalGroup.fundamentalGroupMulEquivOfPath h₂ : FundamentalGroup X x₀ ≃* FundamentalGroup X x₁)) ↔
-    (∀ (g h : FundamentalGroup X x₀), g * h = h * g)
+  · intro h x y
 
-theorem Hatcher_4
-    {X : Type*} [TopologicalSpace X] [PathConnectedSpace X] (x₀ : X) :
-    (∀ (x₁ : X) (h₁ h₂ : Path x₀ x₁),
-      (FundamentalGroup.fundamentalGroupMulEquivOfPath h₁ : FundamentalGroup X x₀ ≃* FundamentalGroup X x₁) =
-      (FundamentalGroup.fundamentalGroupMulEquivOfPath h₂ : FundamentalGroup X x₀ ≃* FundamentalGroup X x₁)) ↔
-    (∀ (g h : FundamentalGroup X x₀), g * h = h * g) := by
-  exact Hatcher_4_axiom x₀
+    have hxy :
+        x⁻¹ * y * x = y :=
+      h x y
+
+    have h' :
+        x * (x⁻¹ * y * x) = x * y := by
+      rw [hxy]
+
+    have h'' : y * x = x * y := by
+      simpa [mul_assoc] using h'
+
+    exact h''.symm
+
+  · intro h g x
+
+    have hg :
+        x * g = g * x :=
+      h x g
+
+    calc
+      g⁻¹ * x * g
+          = g⁻¹ * (x * g) := by
+              rw [mul_assoc]
+      _ = g⁻¹ * (g * x) := by
+              rw [hg]
+      _ = x := by
+              simp
+
+
+theorem fundamentalGroup_conjugation_trivial_iff_abelian
+    {X : Type*} [TopologicalSpace X] (x₀ : X) :
+    (∀ g a : FundamentalGroup X x₀,
+        g⁻¹ * a * g = a) ↔
+      ∀ a b : FundamentalGroup X x₀,
+        a * b = b * a := by
+  exact conjugation_trivial_iff_commutative
+    (FundamentalGroup X x₀)
