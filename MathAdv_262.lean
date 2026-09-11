@@ -1,35 +1,49 @@
 import Mathlib
 
-open MeasureTheory
+open MeasureTheory Filter Topology
+open scoped ENNReal
 
-set_option autoImplicit false
 set_option linter.unusedVariables false
 
-/-- Teorema (probabilities_4_9, Q262 / problem_35):
-    No existe una medida de probabilidad sobre ℕ donde todos los singletons
-    tengan exactamente la misma medida (no hay distribución uniforme σ-aditiva sobre ℕ). -/
 theorem problem_35
-    (P : MeasureTheory.Measure ℕ) [MeasureTheory.IsProbabilityMeasure P] :
-    ¬ (∀ n m : ℕ, P {n} = P {m}) := by
+  (P : MeasureTheory.Measure ℕ) [MeasureTheory.IsProbabilityMeasure P] :
+  ¬ (∀ n m : ℕ, P {n} = P {m}) := by
   intro h
-  have h_const : ∀ n : ℕ, P {0} = P {n} := fun n => h 0 n
-  have h_sum : (∑' n : ℕ, P {n}) = P (Set.univ : Set ℕ) := by
-    rw [← MeasureTheory.measure_iUnion]
-    · congr 1
-      ext x
-      simp only [Set.mem_univ, Set.mem_iUnion, Set.mem_singleton_iff, exists_eq']
+  
+  -- The probability of any singleton equals the probability of {0}.
+  have h0 : ∀ n, P {n} = P {0} := fun n => h n 0
+  
+  -- The measure of the universe is the sum of the measures of all singletons.
+  have h1 : P Set.univ = ∑' n : ℕ, P {n} := by
+    have h_univ : (Set.univ : Set ℕ) = ⋃ n, {n} := by ext x; simp
+    rw [h_univ]
+    apply measure_iUnion
     · intro i j hij
-      exact Set.disjoint_singleton_right.mpr (Ne.symm hij)
+      exact Set.disjoint_singleton.mpr hij
     · intro i
       exact MeasurableSet.singleton i
-  have h_univ : P (Set.univ : Set ℕ) = 1 := MeasureTheory.measure_univ
-  have h_sum_c : (∑' _n : ℕ, P {0}) = 1 := by
-    rw [← h_univ, ← h_sum]
-    congr 1
-    ext n
-    exact h_const n
-  by_cases hc : P {0} = 0
-  · simp [hc] at h_sum_c
-  · have h_top : (∑' _n : ℕ, P {0}) = ⊤ := ENNReal.tsum_const_eq_top_of_ne_zero hc
-    rw [h_top] at h_sum_c
-    exact ENNReal.top_ne_one h_sum_c
+      
+  -- The measure of the universe for a probability measure is 1.
+  have h2 : P Set.univ = 1 := measure_univ
+  rw [h2] at h1
+  
+  -- Substitute P {n} with P {0} in the infinite sum.
+  have h3 : ∑' n : ℕ, P {n} = ∑' n : ℕ, P {0} := tsum_congr h0
+  rw [h3] at h1
+  
+  -- The infinite sum of a constant in ENNReal is either 0 (if the constant is 0) or ⊤.
+  have h4 : ∑' n : ℕ, P {0} = 0 ∨ ∑' n : ℕ, P {0} = ⊤ := by
+    by_cases hc : P {0} = 0
+    · left
+      rw [hc, tsum_zero]
+    · right
+      exact ENNReal.tsum_const_eq_top_of_ne_zero hc
+      
+  -- Both cases contradict the fact that the sum must equal 1.
+  rcases h4 with h_zero | h_top
+  · rw [h_zero] at h1
+    revert h1
+    simp
+  · rw [h_top] at h1
+    revert h1
+    simp
